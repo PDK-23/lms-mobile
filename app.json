@@ -1,0 +1,33 @@
+{
+    "expo": {
+        "name": "LMS Mobile",
+        "slug": "lms-mobile",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "scheme": "lms-mobile",
+        "userInterfaceStyle": "dark",
+        "newArchEnabled": true,
+        "splash": {
+            "backgroundColor": "#121212"
+        },
+        "ios": {
+            "supportsTablet": true
+        },
+        "android": {
+            "adaptiveIcon": {
+                "backgroundColor": "#121212"
+            }
+        },
+        "web": {
+            "bundler": "metro",
+            "output": "static"
+        },
+        "plugins": [
+            "expo-router"
+        ],
+        "experiments": {
+            "typedRoutes": true
+        }
+    }
+}
