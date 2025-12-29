@@ -1,63 +1,79 @@
-import { BorderRadius, Colors, Spacing } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { useTheme } from "@/src/theme/useTheme";
+import { useI18n } from "@/src/i18n";
 
 interface SearchBarProps {
-    value: string;
-    onChangeText: (text: string) => void;
-    placeholder?: string;
-    onSubmit?: () => void;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
+  onSubmit?: () => void;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
-    value,
-    onChangeText,
-    placeholder = 'Tìm kiếm khóa học...',
-    onSubmit,
+  value,
+  onChangeText,
+  placeholder,
+  onSubmit,
 }) => {
-    return (
-        <View style={styles.container}>
-            <Ionicons name="search" size={20} color={Colors.dark.textSecondary} style={styles.icon} />
-            <TextInput
-                style={styles.input}
-                value={value}
-                onChangeText={onChangeText}
-                placeholder={placeholder}
-                placeholderTextColor={Colors.dark.textSecondary}
-                onSubmitEditing={onSubmit}
-                returnKeyType="search"
-            />
-            {value.length > 0 && (
-                <TouchableOpacity onPress={() => onChangeText('')} style={styles.clearButton}>
-                    <Ionicons name="close-circle" size={20} color={Colors.dark.textSecondary} />
-                </TouchableOpacity>
-            )}
-        </View>
-    );
+  const { colors, radius, spacing } = useTheme();
+  const styles = makeStyles(colors, radius, spacing);
+  const { t } = useI18n();
+  const placeholderText = placeholder ?? t("common.searchPlaceholder");
+
+  return (
+    <View style={styles.container}>
+      <Ionicons
+        name="search"
+        size={20}
+        color={colors.textSecondary}
+        style={styles.icon}
+      />
+      <TextInput
+        style={styles.input}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholderText}
+        placeholderTextColor={colors.textSecondary}
+        onSubmitEditing={onSubmit}
+        returnKeyType="search"
+      />
+      {value.length > 0 && (
+        <TouchableOpacity onPress={() => onChangeText("")} style={styles.clearButton}>
+          <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (
+  colors: ReturnType<typeof useTheme>["colors"],
+  radius: ReturnType<typeof useTheme>["radius"],
+  spacing: ReturnType<typeof useTheme>["spacing"]
+) =>
+  StyleSheet.create({
     container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.dark.card,
-        borderRadius: BorderRadius.lg,
-        paddingHorizontal: Spacing.md,
-        height: 48,
-        borderWidth: 1,
-        borderColor: Colors.dark.border,
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      paddingHorizontal: spacing.md,
+      height: 48,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     icon: {
-        marginRight: Spacing.sm,
+      marginRight: spacing.sm,
     },
     input: {
-        flex: 1,
-        color: Colors.dark.text,
-        fontSize: 16,
-        height: '100%',
+      flex: 1,
+      color: colors.text,
+      fontSize: 16,
+      height: "100%",
     },
     clearButton: {
-        padding: Spacing.xs,
+      padding: spacing.xs,
     },
-});
+  });

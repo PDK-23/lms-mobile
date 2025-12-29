@@ -1,19 +1,19 @@
-import { DarkTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { Stack } from "expo-router";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useAuthStore } from "@/src/stores/auth.store";
+import { queryClient } from "@/src/queryClient";
 
 export default function RootLayout() {
+  const hydrate = useAuthStore((s) => s.hydrate);
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
+
   return (
-    <ThemeProvider value={DarkTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="course/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="lesson/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="documents/[courseId]" options={{ headerShown: false }} />
-        <Stack.Screen name="quiz/[id]" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="light" />
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </QueryClientProvider>
   );
 }
