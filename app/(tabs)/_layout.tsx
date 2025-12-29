@@ -3,9 +3,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
 import { useTheme } from "@/src/theme/useTheme";
+import { useI18n } from "@/src/i18n";
 
 export default function TabLayout() {
   const { colors } = useTheme();
+  const { t } = useI18n();
+
   return (
     <Tabs
       screenOptions={{
@@ -29,36 +32,36 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Trang chủ',
+          title: t("tabs.home"),
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
+            <Ionicons name={focused ? "home" : "home-outline"} size={24} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Khám phá',
+          title: t("tabs.explore"),
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'compass' : 'compass-outline'} size={24} color={color} />
+            <Ionicons name={focused ? "compass" : "compass-outline"} size={24} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="my-courses"
         options={{
-          title: 'Khóa học',
+          title: t("tabs.courses"),
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'book' : 'book-outline'} size={24} color={color} />
+            <Ionicons name={focused ? "book" : "book-outline"} size={24} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Hồ sơ',
+          title: t("tabs.profile"),
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+            <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
           ),
         }}
       />

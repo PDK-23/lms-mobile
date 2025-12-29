@@ -1,12 +1,11 @@
-import { Category } from "@/constants/mockData";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, TouchableOpacity } from "react-native";
 import { useTheme } from "@/src/theme/useTheme";
 import { Text } from "@/src/ui/Text";
 
 interface CategoryChipProps {
-  category: Category | { id: string; name: string };
+  category: { id: string | number; name: string; label?: string; icon?: string };
   isSelected?: boolean;
   onPress?: () => void;
 }
@@ -18,6 +17,7 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
 }) => {
   const { colors, radius, spacing } = useTheme();
   const styles = makeStyles(colors, radius, spacing);
+  const label = (category as { label?: string }).label ?? category.name;
 
   return (
     <TouchableOpacity
@@ -25,7 +25,7 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {"icon" in category && (
+      {category.icon && (
         <Ionicons
           name={category.icon as any}
           size={16}
@@ -38,7 +38,7 @@ export const CategoryChip: React.FC<CategoryChipProps> = ({
         weight="500"
         color={isSelected ? colors.background : colors.text}
       >
-        {category.name}
+        {label}
       </Text>
     </TouchableOpacity>
   );

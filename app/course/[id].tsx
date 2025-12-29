@@ -1,16 +1,9 @@
-import { ProgressBar } from "@/components/ProgressBar";
-import { CourseSection, getCourseById, Lesson } from "@/constants/mockData";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
-import {
-  Dimensions,
-  Image,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useMemo, useState } from "react";
+import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { useCourse } from "@/src/features/course/course.hooks";
+import { useI18n } from "@/src/i18n";
 import { useTheme } from "@/src/theme/useTheme";
 import { Button } from "@/src/ui/Button";
 import { Card } from "@/src/ui/Card";
@@ -27,18 +20,43 @@ export default function CourseDetailScreen() {
   const router = useRouter();
   const { colors, radius, spacing, isDark } = useTheme();
   const styles = makeStyles(colors, radius, spacing);
+  const { t } = useI18n();
 
   const [activeTab, setActiveTab] = useState<TabType>("overview");
-  const course = getCourseById(id || "");
 
-  if (!course) {
+  const courseQuery = useCourse(id ?? "");
+  const course = courseQuery.data;
+
+  const imageUri = useMemo(
+    () => (course?.imageUrl ? course.imageUrl.replace(/\\/g, "/") : ""),
+    [course?.imageUrl]
+  );
+
+  const price = course?.price ?? 0;
+  const discount = course?.discount ?? 0;
+  const finalPrice = discount ? price * (1 - discount) : price;
+
+  const formatPrice = (price: number) => {
+    if (!price || price <= 0) return t("course.free");
+    return `${price.toLocaleString("vi-VN")} VND`;
+  };
+
+  if (courseQuery.isLoading) {
+    return (
+      <Screen>
+        <State type="loading" title={t("common.loading")} />
+      </Screen>
+    );
+  }
+
+  if (courseQuery.isError || !course) {
     return (
       <Screen>
         <State
           type="error"
-          title="Kh?ng t?m th?y kh?a h?c"
-          message="Vui l?ng th? l?i ho?c quay v? trang tr??c."
-          actionLabel="Quay l?i"
+          title={t("course.notFound")}
+          message={t("common.errorGeneric")}
+          actionLabel={t("common.back")}
           onAction={() => router.back()}
         />
       </Screen>
@@ -60,115 +78,111 @@ export default function CourseDetailScreen() {
     </TouchableOpacity>
   );
 
-  const renderLesson = (lesson: Lesson, index: number) => (
-    <TouchableOpacity
-      key={lesson.id}
-      style={styles.lessonItem}
-      onPress={() => router.push(`/lesson/${lesson.id}`)}
-    >
-      <View style={[styles.lessonNumber, lesson.isCompleted && styles.lessonCompleted]}>
-        {lesson.isCompleted ? (
-          <Ionicons name="checkmark" size={14} color={colors.background} />
-        ) : (
-          <Text variant="caption" weight="600" color={colors.textSecondary}>
-            {index + 1}
-          </Text>
-        )}
-      </View>
-      <View style={styles.lessonInfo}>
-        <Text variant="body" weight="600">{lesson.title}</Text>
-        <Text variant="caption">{lesson.duration}</Text>
-      </View>
-      <Ionicons name="play-circle-outline" size={24} color={colors.primary} />
-    </TouchableOpacity>
-  );
-
-  const renderSection = (section: CourseSection, sectionIndex: number) => (
-    <View key={section.id} style={styles.section}>
-      <Text variant="subtitle">Ph?n {sectionIndex + 1}: {section.title}</Text>
-      {section.lessons.map((lesson, index) => renderLesson(lesson, index))}
-    </View>
-  );
-
   const renderOverview = () => (
     <View style={styles.tabContent}>
-      <Text variant="subtitle">Gi?i thi?u kh?a h?c</Text>
+      <Text variant="subtitle">{t("course.aboutTitle")}</Text>
       <Text variant="bodySmall" color={colors.textSecondary}>
-        {course.description}
+        {course.description || t("common.noData")}
       </Text>
 
       <View style={styles.statsGrid}>
         <Card style={styles.statBox}>
           <Ionicons name="time-outline" size={24} color={colors.primary} />
-          <Text variant="body" weight="600">{course.duration}</Text>
-          <Text variant="caption">Th?i l??ng</Text>
+          <Text variant="body" weight="600">
+            {course.durationWeeks ?? "-"}
+          </Text>
+          <Text variant="caption">{t("course.duration")}</Text>
         </Card>
         <Card style={styles.statBox}>
           <Ionicons name="bar-chart-outline" size={24} color={colors.primary} />
-          <Text variant="body" weight="600">{course.level}</Text>
-          <Text variant="caption">Tr?nh ??</Text>
+          <Text variant="body" weight="600">
+            {course.level ?? "-"}
+          </Text>
+          <Text variant="caption">{t("course.level")}</Text>
         </Card>
         <Card style={styles.statBox}>
-          <Ionicons name="document-text-outline" size={24} color={colors.primary} />
-          <Text variant="body" weight="600">{course.sections.length}</Text>
-          <Text variant="caption">Ch??ng</Text>
+          <Ionicons name="pricetag-outline" size={24} color={colors.primary} />
+          <Text variant="body" weight="600">
+            {course.tags?.length ?? 0}
+          </Text>
+          <Text variant="caption">{t("course.tagsTitle")}</Text>
         </Card>
       </View>
 
-      {course.documents.length > 0 && (
-        <TouchableOpacity style={styles.documentsBtn} onPress={() => router.push(`/documents/${course.id}`)}>
-          <Ionicons name="folder-outline" size={20} color={colors.primary} />
-          <Text variant="bodySmall" style={styles.actionText}>
-            Xem t?i li?u ({course.documents.length} files)
-          </Text>
-          <Ionicons name="chevron-forward" size={20} color={colors.primary} />
-        </TouchableOpacity>
-      )}
+      {course.tags?.length ? (
+        <View style={styles.listSection}>
+          <Text variant="subtitle">{t("course.tagsTitle")}</Text>
+          <View style={styles.tagList}>
+            {course.tags.map((tag, index) => {
+              const tagName =
+                tag && typeof tag === "object"
+                  ? String((tag as Record<string, unknown>).name ?? "")
+                  : "";
+              if (!tagName) return null;
+              return (
+                <View key={`${tagName}-${index}`} style={styles.tagItem}>
+                  <Text variant="caption" color={colors.primary} weight="600">
+                    {tagName}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
 
-      {course.quiz && (
-        <TouchableOpacity style={styles.quizBtn} onPress={() => router.push(`/quiz/${course.quiz!.id}`)}>
-          <Ionicons name="help-circle-outline" size={20} color={colors.warning} />
-          <Text variant="bodySmall" color={colors.warning} style={styles.actionText}>
-            L?m b?i ki?m tra ({course.quiz.questions.length} c?u h?i)
-          </Text>
-          <Ionicons name="chevron-forward" size={20} color={colors.warning} />
-        </TouchableOpacity>
-      )}
+      {course.prerequisites?.length ? (
+        <View style={styles.listSection}>
+          <Text variant="subtitle">{t("course.prerequisitesTitle")}</Text>
+          {course.prerequisites.map((item, index) => {
+            const name =
+              item && typeof item === "object"
+                ? String((item as Record<string, unknown>).name ?? "")
+                : "";
+            if (!name) return null;
+            return (
+              <Text key={`${name}-${index}`} variant="bodySmall">
+                {name}
+              </Text>
+            );
+          })}
+        </View>
+      ) : null}
     </View>
   );
 
   const renderCurriculum = () => (
-    <View style={styles.tabContent}>
-      {course.sections.map((section, index) => renderSection(section, index))}
-    </View>
+    <State
+      type="empty"
+      title={t("course.curriculumEmptyTitle")}
+      message={t("course.curriculumEmptyMessage")}
+    />
   );
 
-  const renderInstructor = () => (
-    <View style={styles.tabContent}>
-      <Card style={styles.instructorCard}>
-        <Image source={{ uri: course.instructor.avatar }} style={styles.instructorAvatar} />
-        <View style={styles.instructorInfo}>
-          <Text variant="subtitle">{course.instructor.name}</Text>
-          <Text variant="bodySmall" color={colors.textSecondary}>
-            {course.instructor.title}
-          </Text>
-          <View style={styles.instructorStats}>
-            <View style={styles.instructorStat}>
-              <Ionicons name="star" size={14} color="#FFD700" />
-              <Text variant="caption">{course.instructor.rating}</Text>
-            </View>
-            <View style={styles.instructorStat}>
-              <Ionicons name="people-outline" size={14} color={colors.textSecondary} />
-              <Text variant="caption">{course.instructor.studentCount.toLocaleString()} h?c vi?n</Text>
-            </View>
+  const instructorName =
+    course.instructor && typeof course.instructor === "object"
+      ? String((course.instructor as Record<string, unknown>).name ?? "")
+      : "";
+
+  const renderInstructor = () =>
+    instructorName ? (
+      <View style={styles.tabContent}>
+        <Card style={styles.instructorCard}>
+          <View style={styles.instructorInfo}>
+            <Text variant="subtitle">{instructorName}</Text>
+            <Text variant="caption" color={colors.textSecondary}>
+              {t("course.byInstructor", { name: instructorName })}
+            </Text>
           </View>
-        </View>
-      </Card>
-      <Text variant="bodySmall" color={colors.textSecondary}>
-        {course.instructor.bio}
-      </Text>
-    </View>
-  );
+        </Card>
+      </View>
+    ) : (
+      <State
+        type="empty"
+        title={t("course.instructorEmptyTitle")}
+        message={t("course.instructorEmptyMessage")}
+      />
+    );
 
   return (
     <>
@@ -184,10 +198,18 @@ export default function CourseDetailScreen() {
           ),
         }}
       />
-      <Screen padding={false} statusBarBackgroundColor="transparent" statusBarStyle={isDark ? "light-content" : "dark-content"}>
+      <Screen
+        padding={false}
+        statusBarBackgroundColor="transparent"
+        statusBarStyle={isDark ? "light-content" : "dark-content"}
+      >
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.heroContainer}>
-            <Image source={{ uri: course.thumbnail }} style={styles.heroImage} />
+            {imageUri ? (
+              <Image source={{ uri: imageUri }} style={styles.heroImage} />
+            ) : (
+              <View style={styles.heroImage} />
+            )}
             <View style={styles.heroOverlay} />
             <TouchableOpacity style={styles.playButton}>
               <Ionicons name="play" size={32} color={colors.text} />
@@ -196,43 +218,25 @@ export default function CourseDetailScreen() {
 
           <View style={styles.content}>
             <View style={styles.categoryBadge}>
-              <Text variant="caption" weight="600" color={colors.primary}>
-                {course.category}
-              </Text>
-            </View>
-            <Text variant="title">{course.title}</Text>
+            <Text variant="caption" weight="600" color={colors.primary}>
+              {course.code || course.level || "-"}
+            </Text>
+          </View>
+          <Text variant="title">{course.name}</Text>
 
-            <View style={styles.metaRow}>
-              <View style={styles.ratingContainer}>
-                <Ionicons name="star" size={16} color="#FFD700" />
-                <Text variant="bodySmall" weight="600">{course.rating}</Text>
-                <Text variant="bodySmall" color={colors.textSecondary}>
-                  ({course.ratingCount})
-                </Text>
-              </View>
-              <Text variant="bodySmall" color={colors.textSecondary}>
-                b?i {course.instructor.name}
-              </Text>
+          <View style={styles.metaRow}>
+            <Text variant="bodySmall" color={colors.textSecondary}>
+              {t("course.byInstructor", { name: instructorName || "-" })}
+            </Text>
+            <Text variant="bodySmall" color={colors.textSecondary}>
+              {t("course.level")}: {course.level ?? "-"}
+            </Text>
             </View>
-
-            {course.isEnrolled && course.progress !== undefined && (
-              <Card style={styles.progressSection}>
-                <View style={styles.progressHeader}>
-                  <Text variant="bodySmall" color={colors.textSecondary}>
-                    Ti?n ?? h?c t?p
-                  </Text>
-                  <Text variant="bodySmall" color={colors.primary} weight="600">
-                    {course.progress}%
-                  </Text>
-                </View>
-                <ProgressBar progress={course.progress} height={8} />
-              </Card>
-            )}
 
             <View style={styles.tabsContainer}>
-              {renderTab("overview", "T?ng quan")}
-              {renderTab("curriculum", "N?i dung")}
-              {renderTab("instructor", "Gi?ng vi?n")}
+              {renderTab("overview", t("course.overview"))}
+              {renderTab("curriculum", t("course.curriculum"))}
+              {renderTab("instructor", t("course.instructor"))}
             </View>
 
             {activeTab === "overview" && renderOverview()}
@@ -242,31 +246,17 @@ export default function CourseDetailScreen() {
         </ScrollView>
 
         <View style={styles.bottomBar}>
-          {course.isEnrolled ? (
-            <Button
-              label="Ti?p t?c h?c"
-              onPress={() => {
-                const firstIncomplete = course.sections
-                  .flatMap((s) => s.lessons)
-                  .find((l) => !l.isCompleted);
-                if (firstIncomplete) {
-                  router.push(`/lesson/${firstIncomplete.id}`);
-                }
-              }}
-            />
-          ) : (
-            <View style={styles.priceRow}>
-              <View>
-                <Text variant="caption" color={colors.textSecondary}>
-                  Gi? kh?a h?c
-                </Text>
-                <Text variant="title" color={colors.primary}>
-                  ${course.price}
-                </Text>
-              </View>
-              <Button label="??ng k? ngay" onPress={() => {}} fullWidth={false} />
+          <View style={styles.priceRow}>
+            <View>
+              <Text variant="caption" color={colors.textSecondary}>
+                {t("course.priceLabel")}
+              </Text>
+              <Text variant="title" color={colors.primary}>
+                {formatPrice(finalPrice)}
+              </Text>
             </View>
-          )}
+            <Button label={t("course.enrollNow")} onPress={() => {}} fullWidth={false} />
+          </View>
         </View>
       </Screen>
     </>
@@ -332,19 +322,6 @@ const makeStyles = (
       alignItems: "center",
       justifyContent: "space-between",
     },
-    ratingContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 4,
-    },
-    progressSection: {
-      padding: spacing.md,
-    },
-    progressHeader: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      marginBottom: spacing.sm,
-    },
     tabsContainer: {
       flexDirection: "row",
       backgroundColor: colors.surface,
@@ -377,56 +354,19 @@ const makeStyles = (
       alignItems: "center",
       gap: spacing.xs,
     },
-    documentsBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.surface,
-      padding: spacing.md,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    quizBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.warning + "15",
-      padding: spacing.md,
-      borderRadius: radius.lg,
-      borderWidth: 1,
-      borderColor: colors.warning + "55",
-    },
-    actionText: {
-      flex: 1,
-      marginLeft: spacing.sm,
-    },
-    section: {
-      marginBottom: spacing.lg,
+    listSection: {
       gap: spacing.sm,
     },
-    lessonItem: {
+    tagList: {
       flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.surface,
-      padding: spacing.md,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.border,
-      gap: spacing.md,
+      flexWrap: "wrap",
+      gap: spacing.sm,
     },
-    lessonNumber: {
-      width: 28,
-      height: 28,
-      borderRadius: 14,
-      backgroundColor: colors.surfaceAlt,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    lessonCompleted: {
-      backgroundColor: colors.success,
-    },
-    lessonInfo: {
-      flex: 1,
-      gap: 2,
+    tagItem: {
+      backgroundColor: colors.primarySoft,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 4,
+      borderRadius: radius.full,
     },
     instructorCard: {
       flexDirection: "row",
@@ -434,24 +374,8 @@ const makeStyles = (
       padding: spacing.md,
       gap: spacing.md,
     },
-    instructorAvatar: {
-      width: 64,
-      height: 64,
-      borderRadius: 32,
-      backgroundColor: colors.surfaceAlt,
-    },
     instructorInfo: {
       flex: 1,
-      gap: 4,
-    },
-    instructorStats: {
-      flexDirection: "row",
-      gap: spacing.md,
-      marginTop: spacing.xs,
-    },
-    instructorStat: {
-      flexDirection: "row",
-      alignItems: "center",
       gap: 4,
     },
     bottomBar: {

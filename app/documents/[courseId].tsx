@@ -8,13 +8,14 @@ import { Card } from "@/src/ui/Card";
 import { Screen } from "@/src/ui/Screen";
 import { State } from "@/src/ui/State";
 import { Text } from "@/src/ui/Text";
+import { useI18n } from "@/src/i18n";
 
-const getIcon = (type: Document['type']) => {
+const getIcon = (type: Document["type"]) => {
   const icons: Record<string, { name: string; color: string }> = {
-    pdf: { name: 'document-text', color: '#FF5252' },
-    slides: { name: 'easel', color: '#FF9800' },
-    code: { name: 'code-slash', color: '#4CAF50' },
-    video: { name: 'videocam', color: '#2196F3' },
+    pdf: { name: "document-text", color: "#FF5252" },
+    slides: { name: "easel", color: "#FF9800" },
+    code: { name: "code-slash", color: "#4CAF50" },
+    video: { name: "videocam", color: "#2196F3" },
   };
   return icons[type];
 };
@@ -24,17 +25,18 @@ export default function DocumentsScreen() {
   const router = useRouter();
   const { colors, radius, spacing } = useTheme();
   const styles = makeStyles(colors, radius, spacing);
+  const { t } = useI18n();
 
-  const course = getCourseById(courseId || '');
+  const course = getCourseById(courseId || "");
 
   if (!course) {
     return (
       <Screen>
         <State
           type="error"
-          title="Kh?ng t?m th?y kh?a h?c"
-          message="Vui l?ng th? l?i ho?c quay v? trang tr??c."
-          actionLabel="Quay l?i"
+          title={t("documents.notFound")}
+          message={t("common.errorGeneric")}
+          actionLabel={t("common.back")}
           onAction={() => router.back()}
         />
       </Screen>
@@ -45,12 +47,12 @@ export default function DocumentsScreen() {
     const icon = getIcon(item.type);
     return (
       <Card style={styles.card}>
-        <View style={[styles.iconBox, { backgroundColor: icon.color + '20' }]}>
+        <View style={[styles.iconBox, { backgroundColor: icon.color + "20" }]}>
           <Ionicons name={icon.name as any} size={28} color={icon.color} />
         </View>
         <View style={styles.info}>
           <Text variant="body" weight="600">{item.title}</Text>
-          <Text variant="caption">{item.type.toUpperCase()} ? {item.size}</Text>
+          <Text variant="caption">{t("documents.meta", { type: item.type.toUpperCase(), size: item.size })}</Text>
         </View>
         <TouchableOpacity style={styles.downloadBtn}>
           <Ionicons name="download-outline" size={22} color={colors.primary} />
@@ -66,14 +68,14 @@ export default function DocumentsScreen() {
           headerShown: true,
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
-          headerTitle: 'T?i li?u',
+          headerTitle: t("documents.title"),
         }}
       />
       <Screen padding={false}>
         <View style={styles.header}>
           <Text variant="subtitle">{course.title}</Text>
           <Text variant="bodySmall" color={colors.textSecondary}>
-            {course.documents.length} t?i li?u
+            {t("documents.count", { count: course.documents.length })}
           </Text>
         </View>
         <FlatList
@@ -105,8 +107,8 @@ const makeStyles = (
       gap: spacing.md,
     },
     card: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       padding: spacing.md,
       gap: spacing.md,
     },
@@ -114,8 +116,8 @@ const makeStyles = (
       width: 50,
       height: 50,
       borderRadius: radius.md,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
     },
     info: {
       flex: 1,
@@ -126,7 +128,7 @@ const makeStyles = (
       height: 40,
       borderRadius: 20,
       backgroundColor: colors.primarySoft,
-      justifyContent: 'center',
-      alignItems: 'center',
+      justifyContent: "center",
+      alignItems: "center",
     },
   });

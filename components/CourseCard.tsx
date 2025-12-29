@@ -1,49 +1,68 @@
-import { Course } from "@/constants/mockData";
+import type { CourseDTO } from "@/src/features/course/course.types";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Dimensions, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useTheme } from "@/src/theme/useTheme";
 import { Text } from "@/src/ui/Text";
+import { useI18n } from "@/src/i18n";
 import { ProgressBar } from "./ProgressBar";
 
 const { width } = Dimensions.get("window");
 
 interface CourseCardProps {
-  course: Course;
+  course: CourseDTO;
   variant?: "horizontal" | "vertical";
   onPress?: () => void;
-  showProgress?: boolean;
+  progress?: number;
 }
 
 export const CourseCard: React.FC<CourseCardProps> = ({
   course,
   variant = "vertical",
   onPress,
-  showProgress = false,
+  progress,
 }) => {
   const { colors, radius, spacing } = useTheme();
   const styles = makeStyles(colors, radius, spacing);
+  const { t } = useI18n();
 
-  const formatPrice = (price: number, currency: string) => {
-    if (currency === "USD") {
-      return `$${price.toFixed(2)}`;
-    }
-    return `${price.toLocaleString("vi-VN")}đ`;
+  const price = course.price ?? 0;
+  const discount = course.discount ?? 0;
+  const finalPrice = discount ? price * (1 - discount) : price;
+  const imageUri = course.imageUrl?.replace(/\\/g, "/");
+
+  const formatPrice = (price: number) => {
+    if (!price || price <= 0) return t("course.free");
+    return `${price.toLocaleString("vi-VN")} VND`;
   };
+
+  const tagName =
+    course.tags?.[0] && typeof course.tags[0] === "object"
+      ? String((course.tags[0] as Record<string, unknown>).name ?? "")
+      : "";
+  const badgeLabel = tagName || course.level || course.code;
+  const instructorName =
+    course.instructor && typeof course.instructor === "object"
+      ? String((course.instructor as Record<string, unknown>).name ?? "-")
+      : "-";
 
   if (variant === "horizontal") {
     return (
       <TouchableOpacity style={styles.horizontalCard} onPress={onPress} activeOpacity={0.8}>
-        <Image source={{ uri: course.thumbnail }} style={styles.horizontalImage} />
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.horizontalImage} />
+        ) : (
+          <View style={styles.horizontalImage} />
+        )}
         <View style={styles.horizontalContent}>
           <Text variant="body" weight="600" numberOfLines={2}>
-            {course.title}
+            {course.name}
           </Text>
-          <Text variant="caption">{course.instructor.name}</Text>
-          {showProgress && course.progress !== undefined && (
+          <Text variant="caption">{instructorName}</Text>
+          {progress !== undefined && (
             <View style={styles.progressContainer}>
-              <ProgressBar progress={course.progress} />
-              <Text variant="caption">{course.progress}%</Text>
+              <ProgressBar progress={progress} />
+              <Text variant="caption">{t("courses.progress", { percent: progress })}</Text>
             </View>
           )}
         </View>
@@ -53,35 +72,38 @@ export const CourseCard: React.FC<CourseCardProps> = ({
 
   return (
     <TouchableOpacity style={styles.verticalCard} onPress={onPress} activeOpacity={0.8}>
-      <Image source={{ uri: course.thumbnail }} style={styles.verticalImage} />
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={styles.verticalImage} />
+      ) : (
+        <View style={styles.verticalImage} />
+      )}
       <View style={styles.verticalContent}>
-        <View style={styles.categoryBadge}>
-          <Text variant="caption" color={colors.primary} weight="600">
-            {course.category}
+        {badgeLabel ? (
+          <View style={styles.categoryBadge}>
+            <Text variant="caption" color={colors.primary} weight="600">
+              {badgeLabel}
+            </Text>
+          </View>
+        ) : null}
+        <Text variant="body" weight="600" numberOfLines={2}>
+          {course.name}
+        </Text>
+        <Text variant="caption">{instructorName}</Text>
+        <View style={styles.footer}>
+          <View style={styles.levelContainer}>
+            <Ionicons name="bar-chart-outline" size={14} color={colors.textSecondary} />
+            <Text variant="caption" color={colors.textSecondary}>
+              {course.level ?? "-"}
+            </Text>
+          </View>
+          <Text variant="bodySmall" color={colors.primary} weight="700">
+            {formatPrice(finalPrice)}
           </Text>
         </View>
-        <Text variant="body" weight="600" numberOfLines={2}>
-          {course.title}
-        </Text>
-        <Text variant="caption">{course.instructor.name}</Text>
-        <View style={styles.footer}>
-          <View style={styles.ratingContainer}>
-            <Ionicons name="star" size={14} color="#FFD700" />
-            <Text variant="caption" weight="600">
-              {course.rating}
-            </Text>
-            <Text variant="caption">({course.ratingCount})</Text>
-          </View>
-          {!course.isEnrolled && (
-            <Text variant="bodySmall" color={colors.primary} weight="700">
-              {formatPrice(course.price, course.currency)}
-            </Text>
-          )}
-        </View>
-        {showProgress && course.progress !== undefined && course.isEnrolled && (
+        {progress !== undefined && (
           <View style={styles.progressContainer}>
-            <ProgressBar progress={course.progress} />
-            <Text variant="caption">{course.progress}% hoàn thành</Text>
+            <ProgressBar progress={progress} />
+            <Text variant="caption">{t("courses.progress", { percent: progress })}</Text>
           </View>
         )}
       </View>
@@ -125,7 +147,7 @@ const makeStyles = (
       justifyContent: "space-between",
       alignItems: "center",
     },
-    ratingContainer: {
+    levelContainer: {
       flexDirection: "row",
       alignItems: "center",
       gap: 4,

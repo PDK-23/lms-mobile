@@ -15,6 +15,7 @@ import { Card } from "@/src/ui/Card";
 import { Screen } from "@/src/ui/Screen";
 import { State } from "@/src/ui/State";
 import { Text } from "@/src/ui/Text";
+import { useI18n } from "@/src/i18n";
 
 const { width } = Dimensions.get("window");
 
@@ -25,6 +26,7 @@ export default function LessonScreen() {
   const router = useRouter();
   const { colors, radius, spacing, isDark } = useTheme();
   const styles = makeStyles(colors, radius, spacing);
+  const { t } = useI18n();
 
   const [activeTab, setActiveTab] = useState<TabType>("description");
   const [isCompleted, setIsCompleted] = useState(false);
@@ -46,9 +48,9 @@ export default function LessonScreen() {
       <Screen>
         <State
           type="error"
-          title="Kh?ng t?m th?y b?i h?c"
-          message="Vui l?ng th? l?i ho?c quay v? trang tr??c."
-          actionLabel="Quay l?i"
+          title={t("lesson.notFound")}
+          message={t("common.errorGeneric")}
+          actionLabel={t("common.back")}
           onAction={() => router.back()}
         />
       </Screen>
@@ -81,7 +83,7 @@ export default function LessonScreen() {
           headerShown: true,
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
-          headerTitle: "B?i h?c",
+          headerTitle: t("lesson.title"),
           headerLeft: () => (
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
               <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -131,9 +133,9 @@ export default function LessonScreen() {
           </View>
 
           <View style={styles.tabsContainer}>
-            {renderTab("description", "M? t?")}
-            {renderTab("resources", "T?i li?u")}
-            {renderTab("comments", "B?nh lu?n")}
+            {renderTab("description", t("lesson.descriptionTab"))}
+            {renderTab("resources", t("lesson.resourcesTab"))}
+            {renderTab("comments", t("lesson.commentsTab"))}
           </View>
 
           <View style={styles.tabContent}>
@@ -148,16 +150,16 @@ export default function LessonScreen() {
                 <Card style={styles.resourceItem}>
                   <Ionicons name="document-text" size={24} color={colors.primary} />
                   <View style={styles.resourceInfo}>
-                    <Text variant="body" weight="500">Slide b?i gi?ng</Text>
-                    <Text variant="caption">PDF - 2.5 MB</Text>
+                    <Text variant="body" weight="500">{t("lesson.resourceSlides")}</Text>
+                    <Text variant="caption">{t("lesson.resourceFormat", { type: "PDF", size: "2.5 MB" })}</Text>
                   </View>
                   <Ionicons name="download-outline" size={24} color={colors.primary} />
                 </Card>
                 <Card style={styles.resourceItem}>
                   <Ionicons name="code-slash" size={24} color={colors.success} />
                   <View style={styles.resourceInfo}>
-                    <Text variant="body" weight="500">Source code</Text>
-                    <Text variant="caption">ZIP - 1.2 MB</Text>
+                    <Text variant="body" weight="500">{t("lesson.resourceSourceCode")}</Text>
+                    <Text variant="caption">{t("lesson.resourceFormat", { type: "ZIP", size: "1.2 MB" })}</Text>
                   </View>
                   <Ionicons name="download-outline" size={24} color={colors.primary} />
                 </Card>
@@ -171,12 +173,12 @@ export default function LessonScreen() {
                     <Text variant="caption" weight="600" color={colors.primary}>TN</Text>
                   </View>
                   <Card style={styles.commentContent}>
-                    <Text variant="body" weight="600">Tr?n Nam</Text>
+                    <Text variant="body" weight="600">{t("lesson.commentsAuthor1")}</Text>
                     <Text variant="bodySmall" color={colors.textSecondary}>
-                      B?i gi?ng r?t d? hi?u, c?m ?n gi?ng vi?n!
+                      {t("lesson.comment1")}
                     </Text>
                     <Text variant="caption" color={colors.textSecondary}>
-                      2 ng?y tr??c
+                      {t("lesson.commentTime1")}
                     </Text>
                   </Card>
                 </View>
@@ -185,12 +187,12 @@ export default function LessonScreen() {
                     <Text variant="caption" weight="600" color={colors.primary}>LH</Text>
                   </View>
                   <Card style={styles.commentContent}>
-                    <Text variant="body" weight="600">L? H??ng</Text>
+                    <Text variant="body" weight="600">{t("lesson.commentsAuthor2")}</Text>
                     <Text variant="bodySmall" color={colors.textSecondary}>
-                      M?nh c? th? xem l?i ph?n 5:30 ???c kh?ng ??
+                      {t("lesson.comment2")}
                     </Text>
                     <Text variant="caption" color={colors.textSecondary}>
-                      1 tu?n tr??c
+                      {t("lesson.commentTime2")}
                     </Text>
                   </Card>
                 </View>
@@ -204,12 +206,12 @@ export default function LessonScreen() {
             <Card style={styles.completedBadge}>
               <Ionicons name="checkmark-circle" size={24} color={colors.success} />
               <Text variant="body" weight="600" color={colors.success}>
-                ?? ho?n th?nh b?i h?c
+                {t("lesson.completed")}
               </Text>
             </Card>
           ) : (
             <Button
-              label="??nh d?u ho?n th?nh"
+              label={t("lesson.markComplete")}
               onPress={handleMarkComplete}
             />
           )}

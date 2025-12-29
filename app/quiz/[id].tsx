@@ -8,12 +8,14 @@ import { Button } from "@/src/ui/Button";
 import { Screen } from "@/src/ui/Screen";
 import { State } from "@/src/ui/State";
 import { Text } from "@/src/ui/Text";
+import { useI18n } from "@/src/i18n";
 
 export default function QuizScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { colors, radius, spacing } = useTheme();
   const styles = makeStyles(colors, radius, spacing);
+  const { t } = useI18n();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -50,9 +52,9 @@ export default function QuizScreen() {
       <Screen>
         <State
           type="error"
-          title="Kh?ng t?m th?y b?i ki?m tra"
-          message="Vui l?ng th? l?i ho?c quay v? trang tr??c."
-          actionLabel="Quay l?i"
+          title={t("quiz.notFound")}
+          message={t("common.errorGeneric")}
+          actionLabel={t("common.back")}
           onAction={() => router.back()}
         />
       </Screen>
@@ -115,14 +117,14 @@ export default function QuizScreen() {
                 color={passed ? colors.success : colors.danger}
               />
             </View>
-            <Text variant="title">{passed ? "Ch?c m?ng!" : "Ch?a ??t"}</Text>
+            <Text variant="title">{passed ? t("quiz.resultPass") : t("quiz.resultFail")}</Text>
             <Text variant="display" color={colors.primary}>
               {score}%
             </Text>
             <Text variant="bodySmall" align="center" color={colors.textSecondary}>
-              B?n ?? tr? l?i ??ng {answers.filter((a, i) => a === quiz!.questions[i].correctAnswer).length}/{quiz.questions.length} c?u h?i
+              {t("quiz.scoreSummary", { correct: answers.filter((a, i) => a === quiz!.questions[i].correctAnswer).length, total: quiz.questions.length })}
             </Text>
-            <Button label="Ho?n th?nh" onPress={() => router.back()} style={styles.doneButton} />
+            <Button label={t("quiz.done")} onPress={() => router.back()} style={styles.doneButton} />
           </View>
         </Screen>
       </>
@@ -156,7 +158,7 @@ export default function QuizScreen() {
             </Text>
           </View>
           <Text variant="bodySmall" color={colors.textSecondary}>
-            C?u {currentIndex + 1}/{quiz.questions.length}
+            {t("quiz.questionProgress", { current: currentIndex + 1, total: quiz.questions.length })}
           </Text>
         </View>
 
@@ -203,13 +205,13 @@ export default function QuizScreen() {
               color={currentIndex === 0 ? colors.textSecondary : colors.text}
             />
             <Text variant="bodySmall" color={currentIndex === 0 ? colors.textSecondary : colors.text}>
-              Tr??c
+              {t("quiz.prev")}
             </Text>
           </TouchableOpacity>
           {currentIndex === quiz.questions.length - 1 ? (
-            <Button label="N?p b?i" onPress={handleFinish} fullWidth={false} />
+            <Button label={t("quiz.submit")} onPress={handleFinish} fullWidth={false} />
           ) : (
-            <Button label="Ti?p" onPress={handleNext} fullWidth={false} />
+            <Button label={t("quiz.next")} onPress={handleNext} fullWidth={false} />
           )}
         </View>
       </Screen>

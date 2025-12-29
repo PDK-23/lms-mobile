@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { useTheme } from "@/src/theme/useTheme";
+import { useI18n } from "@/src/i18n";
 
 interface SearchBarProps {
   value: string;
@@ -13,11 +14,13 @@ interface SearchBarProps {
 export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChangeText,
-  placeholder = "Tim kiem khoa hoc...",
+  placeholder,
   onSubmit,
 }) => {
   const { colors, radius, spacing } = useTheme();
   const styles = makeStyles(colors, radius, spacing);
+  const { t } = useI18n();
+  const placeholderText = placeholder ?? t("common.searchPlaceholder");
 
   return (
     <View style={styles.container}>
@@ -31,7 +34,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         style={styles.input}
         value={value}
         onChangeText={onChangeText}
-        placeholder={placeholder}
+        placeholder={placeholderText}
         placeholderTextColor={colors.textSecondary}
         onSubmitEditing={onSubmit}
         returnKeyType="search"

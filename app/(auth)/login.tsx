@@ -12,14 +12,17 @@ import { Button } from "@/src/ui/Button";
 import { Input } from "@/src/ui/Input";
 import { Screen } from "@/src/ui/Screen";
 import { Text } from "@/src/ui/Text";
+import { useI18n } from "@/src/i18n";
 
 export default function LoginScreen() {
   const { colors, spacing } = useTheme();
   const styles = makeStyles(spacing);
+  const { t } = useI18n();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<{
     username?: string;
@@ -37,14 +40,15 @@ export default function LoginScreen() {
       router.replace("/");
     },
     onError: (e: any) => {
-      const msg =
-        e?.response?.data?.message ?? e?.message ?? "Đăng nhập thất bại";
-      setErrors((prev) => ({ ...prev, password: msg }));
+      const msg = e?.response?.data?.message ?? e?.message ?? null;
+      setApiError(msg);
+      setErrors((prev) => ({ ...prev, password: t("auth.login.invalidCredentials") }));
     },
   });
 
   const handleLogin = () => {
     setErrors({});
+    setApiError(null);
 
     const result = loginSchema.safeParse({
       username,
@@ -55,8 +59,11 @@ export default function LoginScreen() {
     if (!result.success) {
       const formattedErrors: any = {};
       result.error.errors.forEach((err) => {
-        if (err.path[0]) {
-          formattedErrors[err.path[0]] = err.message;
+        if (err.path[0] === "username") {
+          formattedErrors.username = t("auth.login.usernameRequired");
+        }
+        if (err.path[0] === "password") {
+          formattedErrors.password = t("auth.login.passwordRequired");
         }
       });
       setErrors(formattedErrors);
@@ -73,15 +80,15 @@ export default function LoginScreen() {
           <View style={[styles.logoContainer, { backgroundColor: colors.primarySoft }]}>
             <Ionicons name="school-outline" size={40} color={colors.primary} />
           </View>
-          <Text variant="title">Welcome Back!</Text>
+          <Text variant="title">{t("auth.login.title")}</Text>
           <Text variant="bodySmall" color={colors.textSecondary}>
-            Sign in to access your courses
+            {t("auth.login.subtitle")}
           </Text>
         </View>
 
         <View style={styles.form}>
           <Input
-            label="Username"
+            label={t("auth.login.username")}
             value={username}
             onChangeText={(text) => {
               setUsername(text);
@@ -98,49 +105,56 @@ export default function LoginScreen() {
             error={errors.username}
           />
 
-          <Input
-            label="Password"
-            value={password}
-            onChangeText={(text) => {
-              setPassword(text);
-              if (errors.password) setErrors({ ...errors, password: undefined });
-            }}
-            secureTextEntry={!showPassword}
-            leftIcon={
-              <Ionicons
-                name="lock-closed-outline"
-                size={20}
-                color={errors.password ? colors.danger : colors.textSecondary}
-              />
-            }
-            rightIcon={
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <View>
+            <Input
+              label={t("auth.login.password")}
+              value={password}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (errors.password) setErrors({ ...errors, password: undefined });
+              }}
+              secureTextEntry={!showPassword}
+              leftIcon={
                 <Ionicons
-                  name={showPassword ? "eye-outline" : "eye-off-outline"}
+                  name="lock-closed-outline"
                   size={20}
-                  color={colors.textSecondary}
+                  color={errors.password ? colors.danger : colors.textSecondary}
                 />
-              </TouchableOpacity>
-            }
-            error={errors.password}
-          />
+              }
+              rightIcon={
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons
+                    name={showPassword ? "eye-outline" : "eye-off-outline"}
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                </TouchableOpacity>
+              }
+              error={errors.password}
+            />
+            {apiError ? (
+              <Text variant="caption" color={colors.textSecondary} style={styles.apiError}>
+                {t("common.serverMessage", { message: apiError })}
+              </Text>
+            ) : null}
+          </View>
 
           <TouchableOpacity style={styles.forgotPassword}>
             <Text variant="bodySmall" color={colors.primary} weight="600">
-              Forgot Password?
+              {t("auth.login.forgotPassword")}
             </Text>
           </TouchableOpacity>
 
-          <Button label="Sign In" onPress={handleLogin} loading={m.isPending} />
+          <Button label={t("auth.login.signIn")} onPress={handleLogin} loading={m.isPending} />
         </View>
 
         <View style={styles.footer}>
           <Text variant="bodySmall" color={colors.textSecondary}>
-            Don't have an account?
+            {t("auth.login.noAccount")}
           </Text>
           <TouchableOpacity>
             <Text variant="bodySmall" color={colors.primary} weight="700">
-              Contact Admin
+              {t("auth.login.contactAdmin")}
             </Text>
           </TouchableOpacity>
         </View>
@@ -182,5 +196,8 @@ const makeStyles = (spacing: ReturnType<typeof useTheme>["spacing"]) =>
       alignItems: "center",
       marginTop: spacing.lg,
       gap: spacing.xs,
+    },
+    apiError: {
+      marginTop: spacing.xs,
     },
   });
