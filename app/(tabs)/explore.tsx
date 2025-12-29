@@ -1,26 +1,26 @@
-import { CategoryChip } from '@/components/CategoryChip';
-import { CourseCard } from '@/components/CourseCard';
-import { SearchBar } from '@/components/SearchBar';
-import { categories, Course, getCoursesByCategory } from '@/constants/mockData';
-import { Colors, Spacing } from '@/constants/theme';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
-import {
-  FlatList,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
+import { CategoryChip } from "@/components/CategoryChip";
+import { CourseCard } from "@/components/CourseCard";
+import { SearchBar } from "@/components/SearchBar";
+import { categories, Course, getCoursesByCategory } from "@/constants/mockData";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useMemo, useState } from "react";
+import { FlatList, StyleSheet, View } from "react-native";
+import { useTheme } from "@/src/theme/useTheme";
+import { Header } from "@/src/ui/Header";
+import { Screen } from "@/src/ui/Screen";
+import { State } from "@/src/ui/State";
+import { Text } from "@/src/ui/Text";
 
 export default function ExploreScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ category?: string }>();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(params.category || 'All');
+  const { colors, spacing } = useTheme();
+  const styles = makeStyles(spacing);
 
-  const allCategories = [{ id: 'all', name: 'All' }, ...categories];
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(params.category || "All");
+
+  const allCategories = [{ id: "all", name: "All" }, ...categories];
 
   const filteredCourses = useMemo(() => {
     let result = getCoursesByCategory(selectedCategory);
@@ -53,25 +53,22 @@ export default function ExploreScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.dark.background} />
-
-      {/* Header */}
+    <Screen padding={false}>
       <View style={styles.header}>
-        <Text style={styles.title}>Khám phá</Text>
-        <Text style={styles.subtitle}>Tìm kiếm khóa học phù hợp với bạn</Text>
+        <Header
+          title="Kh?m ph?"
+          subtitle="T?m ki?m kh?a h?c ph? h?p v?i b?n"
+        />
       </View>
 
-      {/* Search Bar */}
       <View style={styles.searchContainer}>
         <SearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Tìm kiếm khóa học, giảng viên..."
+          placeholder="T?m ki?m kh?a h?c, gi?ng vi?n..."
         />
       </View>
 
-      {/* Category Filters */}
       <View style={styles.categoryContainer}>
         <FlatList
           data={allCategories}
@@ -83,70 +80,66 @@ export default function ExploreScreen() {
         />
       </View>
 
-      {/* Results Count */}
-      <View style={styles.resultsHeader}>
-        <Text style={styles.resultsText}>
-          {filteredCourses.length} khóa học được tìm thấy
-        </Text>
-      </View>
+      {filteredCourses.length > 0 ? (
+        <View style={styles.resultsHeader}>
+          <Text variant="bodySmall" color={colors.textSecondary}>
+            {filteredCourses.length} kh?a h?c ???c t?m th?y
+          </Text>
+        </View>
+      ) : null}
 
-      {/* Course List */}
-      <FlatList
-        data={filteredCourses}
-        renderItem={renderCourseItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.courseRow}
-        contentContainerStyle={styles.courseList}
-        showsVerticalScrollIndicator={false}
-      />
-    </SafeAreaView>
+      {filteredCourses.length === 0 ? (
+        <State
+          type="empty"
+          title="Kh?ng c? kh?a h?c"
+          message="Th? ??i b? l?c ho?c t? kh?a t?m ki?m."
+          actionLabel="X?a b? l?c"
+          onAction={() => {
+            setSearchQuery("");
+            setSelectedCategory("All");
+          }}
+        />
+      ) : (
+        <FlatList
+          data={filteredCourses}
+          renderItem={renderCourseItem}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.courseRow}
+          contentContainerStyle={styles.courseList}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  header: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.sm,
-  },
-  title: {
-    color: Colors.dark.text,
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  subtitle: {
-    color: Colors.dark.textSecondary,
-    fontSize: 14,
-    marginTop: Spacing.xs,
-  },
-  searchContainer: {
-    paddingHorizontal: Spacing.lg,
-    marginVertical: Spacing.md,
-  },
-  categoryContainer: {
-    marginBottom: Spacing.md,
-  },
-  categoryList: {
-    paddingHorizontal: Spacing.lg,
-  },
-  resultsHeader: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-  resultsText: {
-    color: Colors.dark.textSecondary,
-    fontSize: 14,
-  },
-  courseList: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
-  },
-  courseRow: {
-    justifyContent: 'space-between',
-  },
-});
+const makeStyles = (spacing: ReturnType<typeof useTheme>["spacing"]) =>
+  StyleSheet.create({
+    header: {
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.lg,
+      paddingBottom: spacing.sm,
+    },
+    searchContainer: {
+      paddingHorizontal: spacing.lg,
+      marginVertical: spacing.md,
+    },
+    categoryContainer: {
+      marginBottom: spacing.md,
+    },
+    categoryList: {
+      paddingHorizontal: spacing.lg,
+    },
+    resultsHeader: {
+      paddingHorizontal: spacing.lg,
+      marginBottom: spacing.md,
+    },
+    courseList: {
+      paddingHorizontal: spacing.lg,
+      paddingBottom: spacing.xl,
+    },
+    courseRow: {
+      justifyContent: "space-between",
+    },
+  });

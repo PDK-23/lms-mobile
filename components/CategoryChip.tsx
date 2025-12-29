@@ -1,69 +1,71 @@
-import { Category } from '@/constants/mockData';
-import { BorderRadius, Colors, Spacing } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Category } from "@/constants/mockData";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { useTheme } from "@/src/theme/useTheme";
+import { Text } from "@/src/ui/Text";
 
 interface CategoryChipProps {
-    category: Category | { id: string; name: string };
-    isSelected?: boolean;
-    onPress?: () => void;
+  category: Category | { id: string; name: string };
+  isSelected?: boolean;
+  onPress?: () => void;
 }
 
 export const CategoryChip: React.FC<CategoryChipProps> = ({
-    category,
-    isSelected = false,
-    onPress,
+  category,
+  isSelected = false,
+  onPress,
 }) => {
-    return (
-        <TouchableOpacity
-            style={[
-                styles.chip,
-                isSelected && styles.chipSelected,
-            ]}
-            onPress={onPress}
-            activeOpacity={0.7}
-        >
-            {'icon' in category && (
-                <Ionicons
-                    name={category.icon as any}
-                    size={16}
-                    color={isSelected ? Colors.dark.background : Colors.dark.primary}
-                    style={styles.icon}
-                />
-            )}
-            <Text style={[styles.text, isSelected && styles.textSelected]}>
-                {category.name}
-            </Text>
-        </TouchableOpacity>
-    );
+  const { colors, radius, spacing } = useTheme();
+  const styles = makeStyles(colors, radius, spacing);
+
+  return (
+    <TouchableOpacity
+      style={[styles.chip, isSelected && styles.chipSelected]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      {"icon" in category && (
+        <Ionicons
+          name={category.icon as any}
+          size={16}
+          color={isSelected ? colors.background : colors.primary}
+          style={styles.icon}
+        />
+      )}
+      <Text
+        variant="bodySmall"
+        weight="500"
+        color={isSelected ? colors.background : colors.text}
+      >
+        {category.name}
+      </Text>
+    </TouchableOpacity>
+  );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (
+  colors: ReturnType<typeof useTheme>["colors"],
+  radius: ReturnType<typeof useTheme>["radius"],
+  spacing: ReturnType<typeof useTheme>["spacing"]
+) =>
+  StyleSheet.create({
     chip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
-        borderRadius: BorderRadius.full,
-        backgroundColor: Colors.dark.card,
-        borderWidth: 1,
-        borderColor: Colors.dark.border,
-        marginRight: Spacing.sm,
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: radius.full,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginRight: spacing.sm,
     },
     chipSelected: {
-        backgroundColor: Colors.dark.primary,
-        borderColor: Colors.dark.primary,
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
     },
     icon: {
-        marginRight: Spacing.xs,
+      marginRight: spacing.xs,
     },
-    text: {
-        color: Colors.dark.text,
-        fontSize: 14,
-        fontWeight: '500',
-    },
-    textSelected: {
-        color: Colors.dark.background,
-    },
-});
+  });
