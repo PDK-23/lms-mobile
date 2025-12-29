@@ -1,9 +1,8 @@
 import { Stack } from "expo-router";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAuthStore } from "@/src/stores/auth.store";
-
-const queryClient = new QueryClient();
+import { queryClient } from "@/src/queryClient";
 
 export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);

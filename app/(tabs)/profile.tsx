@@ -4,7 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
+    Alert,
     Image,
+    Platform,
     SafeAreaView,
     ScrollView,
     StatusBar,
@@ -13,6 +15,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useLogout } from '@/src/features/auth/useLogout';
 
 interface SettingItem {
     id: string;
@@ -26,8 +29,39 @@ interface SettingItem {
 
 export default function ProfileScreen() {
     const router = useRouter();
+    const logout = useLogout();
     const enrolledCourses = getEnrolledCourses();
     const completedCourses = enrolledCourses.filter(c => c.progress === 100).length;
+
+    const handleLogout = async () => {
+        if (Platform.OS === 'web') {
+            const ok =
+                typeof window !== 'undefined'
+                    ? window.confirm('Ban co chac muon dang xuat?')
+                    : true;
+            if (!ok) return;
+            await logout();
+            router.replace('/(auth)/login');
+            return;
+        }
+
+        Alert.alert(
+            'Dang xuat',
+            'Ban co chac muon dang xuat?',
+            [
+                { text: 'Huy', style: 'cancel' },
+                {
+                    text: 'Dang xuat',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await logout();
+                        router.replace('/(auth)/login');
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
+    };
 
     const settingsGroups: SettingItem[][] = [
         [
@@ -46,7 +80,13 @@ export default function ProfileScreen() {
             { id: '9', icon: 'shield-checkmark-outline', title: 'Chính sách bảo mật', showArrow: true },
         ],
         [
-            { id: '10', icon: 'log-out-outline', title: 'Đăng xuất', color: Colors.dark.error },
+            {
+                id: '10',
+                icon: 'log-out-outline',
+                title: 'Đăng xuất',
+                color: Colors.dark.error,
+                onPress: handleLogout,
+            },
         ],
     ];
 
